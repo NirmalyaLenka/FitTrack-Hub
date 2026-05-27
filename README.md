@@ -59,12 +59,14 @@ The app reads a small config from `src/config.js`. You can change the default we
  
 Because there is no backend, you can deploy the `build` output to GitHub Pages, Netlify, Vercel, or any other static host with no extra configuration. A `CNAME` file is not included by default; add one if you are using a custom domain with GitHub Pages.
  ## visuals from the web page
- ## pic 1
+ ## Picture 1
  <img width="1246" height="923" alt="image" src="https://github.com/user-attachments/assets/c80784e8-dd37-46b0-a5b6-b2b24580ddd0" /> 
 
- ## pic2
+ ## Picture2
 
  <img width="1902" height="962" alt="image" src="https://github.com/user-attachments/assets/cbcf83f2-e409-4389-9580-310d3c2ed9f5" />
+
+ ## Picture3
 
  
 <img width="1902" height="968" alt="image" src="https://github.com/user-attachments/assets/154486f8-2528-446b-97ab-f7b0ffa4b15a" />

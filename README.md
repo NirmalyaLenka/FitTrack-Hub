@@ -61,6 +61,7 @@ Because there is no backend, you can deploy the `build` output to GitHub Pages, 
  ## visuals from the web page
  ## pic 1
  <img width="1246" height="923" alt="image" src="https://github.com/user-attachments/assets/c80784e8-dd37-46b0-a5b6-b2b24580ddd0" /> 
+
  ## pic2
 
  <img width="1902" height="962" alt="image" src="https://github.com/user-attachments/assets/cbcf83f2-e409-4389-9580-310d3c2ed9f5" />

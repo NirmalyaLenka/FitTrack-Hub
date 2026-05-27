@@ -58,7 +58,10 @@ The app reads a small config from `src/config.js`. You can change the default we
 ## Deployment
  
 Because there is no backend, you can deploy the `build` output to GitHub Pages, Netlify, Vercel, or any other static host with no extra configuration. A `CNAME` file is not included by default; add one if you are using a custom domain with GitHub Pages.
- 
+ ## visuals from the web page
+
+ <img width="1246" height="923" alt="image" src="https://github.com/user-attachments/assets/c80784e8-dd37-46b0-a5b6-b2b24580ddd0" />
+
 ## Known Limitations
  
 Data lives in the browser. If a user clears their site data or switches to a different browser, their history is gone. The roadmap below covers a proper persistence layer.

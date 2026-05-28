@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="FitTrack Hub - Personal fitness tracking app">
+  <title>FitTrack Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0A0A0A;
+      --surface:  #141414;
+      --border:   #2A2A2A;
+      --red:      #FF3B30;
+      --red-dark: #D92E25;
+      --muted:    #8A8A8E;
+      --white:    #F5F5F5;
+      --yellow:   #F5D020;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    /* ---- Layout ---- */
+    .app { display: flex; flex-direction: column; min-height: 100vh; }
+    .main { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+    /* ---- Header ---- */
+    header.top {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    header.top h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.1em; color: var(--red); }
+    .nav-pills { display: flex; gap: 8px; }
+    .nav-pill {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+      font-weight: 500; letter-spacing: 0.05em; transition: all 0.15s;
+    }
+    .nav-pill:hover, .nav-pill.active { border-color: var(--red); color: var(--white); background: rgba(255,59,48,0.1); }
+
+    /* ---- Page sections ---- */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ---- Dashboard ---- */
+    .dash-title { font-size: 3.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .dash-sub { font-size: 0.85rem; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 28px; }
+
+    .hero-banner {
+      height: 200px; border-radius: 2px; margin-bottom: 28px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 50%, #1a0a0a 100%);
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); position: relative; overflow: hidden;
+    }
+    .hero-banner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(255,59,48,0.15) 0%, transparent 60%);
+    }
+    .hero-quote {
+      font-size: 1.4rem; font-weight: 700; text-align: center;
+      letter-spacing: -0.01em; line-height: 1.4; padding: 20px;
+      position: relative; z-index: 1; text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+    }
+
+    /* ---- Stats grid ---- */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 20px; transition: border-color 0.15s; border-radius: 2px;
+    }
+    .stat-card:hover { border-color: var(--red); }
+    .stat-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); }
+    .stat-value { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; }
+    .stat-unit { font-size: 0.9rem; color: var(--muted); margin-left: 4px; }
+    .icon-red { color: var(--red); }
+
+    /* ---- Streak card ---- */
+    .streak-card {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 20px; margin-bottom: 28px; border-radius: 2px;
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .streak-flame {
+      font-size: 2.5rem; line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(255,59,48,0.6));
+    }
+    .streak-info { flex: 1; }
+    .streak-number { font-size: 2.8rem; font-weight: 700; color: var(--red); line-height: 1; }
+    .streak-label { font-size: 0.75rem; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+    .streak-best { text-align: right; }
+    .streak-best-num { font-size: 1.4rem; font-weight: 700; color: var(--yellow); }
+    .streak-best-label { font-size: 0.65rem; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+    .streak-calendar { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+    .streak-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+    .streak-dot.worked { background: var(--red); box-shadow: 0 0 4px rgba(255,59,48,0.5); }
+    .streak-dot.today { outline: 2px solid var(--red); outline-offset: 1px; }
+    .streak-message { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 6px; }
+
+    /* ---- Charts row ---- */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 2px; }
+    .chart-title { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 14px; }
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ---- Action buttons ---- */
+    .actions-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .btn-action {
+      background: var(--red); color: #fff; border: none; padding: 16px 12px;
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.05em;
+      cursor: pointer; border-radius: 2px; display: flex; align-items: center;
+      justify-content: center; gap: 8px; transition: background 0.15s;
+    }
+    .btn-action:hover { background: var(--red-dark); }
+
+    /* ---- Recent lists row ---- */
+    .lists-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    @media (max-width: 768px) { .lists-row { grid-template-columns: 1fr; } }
+    .list-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 2px; }
+    .list-title { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 14px; }
+    .list-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 20px 0; }
+    .list-items { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+    .list-item-name { font-weight: 600; font-size: 0.9rem; }
+    .list-item-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .list-item-value { color: var(--red); font-weight: 700; font-size: 0.9rem; }
+    .btn-del {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; padding: 2px 6px; border-radius: 2px;
+      font-size: 1rem; transition: color 0.15s; margin-left: 8px;
+    }
+    .btn-del:hover { color: var(--red); }
+
+    /* ---- Sleep full chart ---- */
+    .sleep-chart-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; margin-bottom: 28px; border-radius: 2px; }
+
+    /* ---- Footer contact ---- */
+    .contact-footer {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 32px; text-align: center; border-radius: 2px; margin-bottom: 28px;
+    }
+    .contact-footer h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.05em; }
+    .contact-footer p { color: var(--muted); font-size: 0.85rem; margin-bottom: 10px; }
+    .contact-footer a { color: var(--red); font-weight: 700; text-decoration: none; letter-spacing: 0.05em; }
+    .contact-footer a:hover { color: var(--red-dark); }
+
+    /* ---- Log Workout page ---- */
+    .page-title { font-size: 2rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; }
+    .page-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
+
+    .form-card { background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: 2px; margin-bottom: 20px; }
+    .form-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 14px; font-weight: 600; }
+    .form-row { display: grid; gap: 14px; margin-bottom: 14px; }
+    .form-row-2 { grid-template-columns: 1fr 1fr; }
+    .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    @media(max-width:600px){ .form-row-2,.form-row-3 { grid-template-columns: 1fr; } }
+    label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 5px; letter-spacing: 0.05em; }
+    input, select, textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--white); padding: 10px 12px; border-radius: 2px;
+      font-size: 0.9rem; font-family: inherit; transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--red); }
+    textarea { resize: vertical; min-height: 80px; }
+    select option { background: var(--surface); }
+
+    /* Exercise builder */
+    .exercise-block {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 2px; padding: 16px; margin-bottom: 12px;
+    }
+    .exercise-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .exercise-name-display { font-weight: 700; font-size: 0.95rem; }
+    .sets-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .sets-table th { color: var(--muted); text-align: left; padding: 4px 8px 8px; font-weight: 500; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .sets-table td { padding: 4px 4px; }
+    .sets-table input { padding: 6px 8px; font-size: 0.85rem; }
+    .set-num { color: var(--muted); font-weight: 600; padding: 0 8px; min-width: 30px; text-align: center; }
+
+    .btn { padding: 10px 20px; border-radius: 2px; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none; letter-spacing: 0.05em; transition: background 0.15s; }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-secondary { background: var(--surface); color: var(--white); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--red); }
+    .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ---- Modal ---- */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); z-index: 100;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; padding: 28px; width: 100%; max-width: 480px;
+      position: relative; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.03em; }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; color: var(--muted);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: var(--white); }
+    .modal .form-row { margin-bottom: 16px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    /* ---- History page ---- */
+    .history-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .history-filters input, .history-filters select { width: auto; flex: 1; min-width: 140px; }
+    .workout-history-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 2px; padding: 18px; margin-bottom: 12px;
+    }
+    .workout-history-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+    .workout-history-name { font-size: 1rem; font-weight: 700; }
+    .workout-history-date { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .workout-history-meta { display: flex; gap: 16px; font-size: 0.78rem; color: var(--muted); }
+    .workout-history-meta span { color: var(--white); font-weight: 600; }
+    .exercises-summary { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+
+    /* ---- Notification toast ---- */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--red);
+      padding: 12px 24px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+      z-index: 200; opacity: 0; transition: opacity 0.3s;
+      white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .toast.show { opacity: 1; }
+
+    /* ---- Scrollbar ---- */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ---- SVG icons ---- */
+    .icon { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP NAV -->
+  <header class="top">
+    <h1>FITTRACK</h1>
+    <nav class="nav-pills">
+      <button class="nav-pill active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="nav-pill" onclick="showPage('log')">Log Workout</button>
+      <button class="nav-pill" onclick="showPage('history')">History</button>
+    </nav>
+  </header>
+
+  <div class="main">
+
+    <!-- ===================== DASHBOARD PAGE ===================== -->
+    <div id="page-dashboard" class="page active">
+
+      <header style="margin-bottom:28px">
+        <div class="dash-title">FITTRACK</div>
+        <div class="dash-sub">Performance Dashboard</div>
+      </header>
+
+      <!-- Hero banner with rotating quote -->
+      <div class="hero-banner">
+        <div class="hero-quote" id="hero-quote">Push harder than yesterday if you want a different tomorrow.</div>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <svg class="icon icon-red" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <span class="stat-label">Calories Today</span>
+          </div>
+          <div class="stat-value" id="stat-cal">0<span class="stat-unit">kcal</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <svg class="icon icon-red" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+            <span class="stat-label">Workouts/Week</span>
+          </div>
+          <div class="stat-value" id="stat-wk">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <svg class="icon icon-red" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <span class="stat-label">Burned/Week</span>
+          </div>
+          <div class="stat-value" id="stat-burned">0<span class="stat-unit">kcal</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <svg class="icon icon-red" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <span class="stat-label">Avg Sleep</span>
+          </div>
+          <div class="stat-value" id="stat-sleep">0<span class="stat-unit">h</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <svg class="icon icon-red" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <span class="stat-label">Recovery</span>
+          </div>
+          <div class="stat-value" id="stat-recovery">0<span class="stat-unit">/10</span></div>
+        </div>
+      </div>
+
+      <!-- Streak card -->
+      <div class="streak-card">
+        <div class="streak-flame">&#x1F525;</div>
+        <div class="streak-info">
+          <div class="streak-number" id="streak-num">0</div>
+          <div class="streak-label">Day Streak</div>
+          <div class="streak-message" id="streak-msg">Log your first workout to start your streak!</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Last 21 Days</div>
+          <div class="streak-calendar" id="streak-calendar"></div>
+        </div>
+        <div class="streak-best">
+          <div class="streak-best-num" id="streak-best-num">0</div>
+          <div class="streak-best-label">Best Streak</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">CALORIE INTAKE TREND</div>
+          <div class="chart-wrap"><canvas id="chart-calories"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">WORKOUT DURATION</div>
+          <div class="chart-wrap"><canvas id="chart-duration"></canvas></div>
+        </div>
+      </div>
+      <div class="sleep-chart-card">
+        <div class="chart-title">SLEEP PATTERN</div>
+        <div class="chart-wrap"><canvas id="chart-sleep"></canvas></div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="actions-row">
+        <button class="btn-action" onclick="openModal('modal-calories')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          ADD CALORIES
+        </button>
+        <button class="btn-action" onclick="showPage('log')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          LOG WORKOUT
+        </button>
+        <button class="btn-action" onclick="openModal('modal-sleep')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          LOG SLEEP
+        </button>
+        <button class="btn-action" onclick="openModal('modal-recovery')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          LOG RECOVERY
+        </button>
+      </div>
+
+      <!-- Recent lists -->
+      <div class="lists-row">
+        <div class="list-card">
+          <div class="list-title">RECENT CALORIE INTAKE</div>
+          <div class="list-items" id="list-calories"></div>
+        </div>
+        <div class="list-card">
+          <div class="list-title">RECENT WORKOUTS</div>
+          <div class="list-items" id="list-workouts"></div>
+        </div>
+      </div>
+
+      <!-- Contact footer -->
+      <div class="contact-footer">
+        <h3>NEED HELP OR FOUND A BUG?</h3>
+        <p>Contact us for improvements or bug fixes</p>
+        <a href="mailto:carmodbhai@gmail.com">carmodbhai@gmail.com</a>
+      </div>
+    </div>
+
+    <!-- ===================== LOG WORKOUT PAGE ===================== -->
+    <div id="page-log" class="page">
+      <div class="page-title">LOG WORKOUT</div>
+      <div class="page-sub">Record your session details and exercises</div>
+
+      <div class="form-card">
+        <div class="form-section-title">Session Details</div>
+        <div class="form-row form-row-2">
+          <div>
+            <label>Workout Name</label>
+            <input type="text" id="wk-name" placeholder="e.g. Morning Push Day">
+          </div>
+          <div>
+            <label>Date</label>
+            <input type="date" id="wk-date">
+          </div>
+        </div>
+        <div class="form-row form-row-2">
+          <div>
+            <label>Duration (minutes)</label>
+            <input type="number" id="wk-duration" placeholder="45" min="1" max="300">
+          </div>
+          <div>
+            <label>Calories Burned (est.)</label>
+            <input type="number" id="wk-burned" placeholder="300" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Notes</label>
+            <textarea id="wk-notes" placeholder="How did you feel? Any PRs today?"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Exercises</div>
+        <div id="exercises-container"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-secondary btn-sm" onclick="addExercise()">+ Add Exercise</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveWorkout()">Save Workout</button>
+        <button class="btn btn-secondary" onclick="clearWorkoutForm()">Clear</button>
+      </div>
+    </div>
+
+    <!-- ===================== HISTORY PAGE ===================== -->
+    <div id="page-history" class="page">
+      <div class="page-title">WORKOUT HISTORY</div>
+      <div class="page-sub">All your logged sessions</div>
+
+      <div class="history-filters">
+        <input type="text" id="history-search" placeholder="Search by name..." oninput="renderHistory()">
+        <select id="history-sort" onchange="renderHistory()">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="duration">Longest Duration</option>
+        </select>
+      </div>
+
+      <div id="history-list"></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Add Calories Modal -->
+<div class="modal-backdrop" id="modal-calories">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-calories')">&times;</button>
+    <div class="modal-title">Add Calorie Entry</div>
+    <div class="form-row">
+      <div><label>Food Name</label><input type="text" id="cal-food" placeholder="e.g. Chicken Breast"></div>
+    </div>
+    <div class="form-row form-row-2">
+      <div><label>Calories (kcal)</label><input type="number" id="cal-amount" placeholder="350" min="0"></div>
+      <div>
+        <label>Meal Type</label>
+        <select id="cal-meal">
+          <option>Breakfast</option>
+          <option>Lunch</option>
+          <option>Dinner</option>
+          <option>Snack</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label>Date</label><input type="date" id="cal-date"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-calories')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCalories()">Add Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log Sleep Modal -->
+<div class="modal-backdrop" id="modal-sleep">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-sleep')">&times;</button>
+    <div class="modal-title">Log Sleep</div>
+    <div class="form-row form-row-2">
+      <div><label>Hours Slept</label><input type="number" id="sleep-hours" placeholder="7.5" min="0" max="24" step="0.5"></div>
+      <div><label>Quality (1-10)</label><input type="number" id="sleep-quality" placeholder="8" min="1" max="10"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Date</label><input type="date" id="sleep-date"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-sleep')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSleep()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log Recovery Modal -->
+<div class="modal-backdrop" id="modal-recovery">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-recovery')">&times;</button>
+    <div class="modal-title">Log Recovery</div>
+    <div class="form-row form-row-2">
+      <div><label>Recovery Score (1-10)</label><input type="number" id="rec-score" placeholder="7" min="1" max="10"></div>
+      <div><label>Date</label><input type="date" id="rec-date"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Notes (optional)</label><textarea id="rec-notes" placeholder="Muscle soreness? Energy level?"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-recovery')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecovery()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  DATA LAYER  — localStorage-backed, simple JSON store
+// ============================================================
+const DB = {
+  get(key) {
+    try { return JSON.parse(localStorage.getItem('ft_' + key) || '[]'); }
+    catch { return []; }
+  },
+  set(key, val) {
+    localStorage.setItem('ft_' + key, JSON.stringify(val));
+  },
+  push(key, item) {
+    const arr = DB.get(key);
+    arr.push(item);
+    DB.set(key, arr);
+  },
+  remove(key, id) {
+    DB.set(key, DB.get(key).filter(x => x.id !== id));
+  }
+};
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+// ============================================================
+//  NAVIGATION
+// ============================================================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
+  const map = { dashboard: 0, log: 1, history: 2 };
+  document.querySelectorAll('.nav-pill')[map[name]].classList.add('active');
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'history') renderHistory();
+}
+
+// ============================================================
+//  MODALS
+// ============================================================
+function openModal(id) {
+  // Pre-fill date fields
+  const dateFields = { 'modal-calories': 'cal-date', 'modal-sleep': 'sleep-date', 'modal-recovery': 'rec-date' };
+  if (dateFields[id]) document.getElementById(dateFields[id]).value = today();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+// Close on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ============================================================
+//  TOAST
+// ============================================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+//  CALORIES
+// ============================================================
+function saveCalories() {
+  const food = document.getElementById('cal-food').value.trim();
+  const amount = parseFloat(document.getElementById('cal-amount').value);
+  const meal = document.getElementById('cal-meal').value;
+  const date = document.getElementById('cal-date').value;
+  if (!food) { toast('Please enter a food name.'); return; }
+  if (!amount || amount <= 0) { toast('Please enter a valid calorie amount.'); return; }
+  if (!date) { toast('Please pick a date.'); return; }
+  DB.push('calories', { id: uid(), food, amount, meal, date });
+  closeModal('modal-calories');
+  document.getElementById('cal-food').value = '';
+  document.getElementById('cal-amount').value = '';
+  refreshDashboard();
+  toast('Calorie entry added!');
+}
+
+function deleteCalorie(id) {
+  DB.remove('calories', id);
+  refreshDashboard();
+  toast('Entry removed.');
+}
+
+// ============================================================
+//  SLEEP
+// ============================================================
+function saveSleep() {
+  const hours = parseFloat(document.getElementById('sleep-hours').value);
+  const quality = parseInt(document.getElementById('sleep-quality').value);
+  const date = document.getElementById('sleep-date').value;
+  if (!hours || hours <= 0) { toast('Please enter valid sleep hours.'); return; }
+  if (!date) { toast('Please pick a date.'); return; }
+  DB.push('sleep', { id: uid(), hours, quality: quality || null, date });
+  closeModal('modal-sleep');
+  document.getElementById('sleep-hours').value = '';
+  document.getElementById('sleep-quality').value = '';
+  refreshDashboard();
+  toast('Sleep logged!');
+}
+
+// ============================================================
+//  RECOVERY
+// ============================================================
+function saveRecovery() {
+  const score = parseInt(document.getElementById('rec-score').value);
+  const date = document.getElementById('rec-date').value;
+  const notes = document.getElementById('rec-notes').value.trim();
+  if (!score || score < 1 || score > 10) { toast('Enter a recovery score between 1 and 10.'); return; }
+  if (!date) { toast('Please pick a date.'); return; }
+  DB.push('recovery', { id: uid(), score, notes, date });
+  closeModal('modal-recovery');
+  document.getElementById('rec-score').value = '';
+  document.getElementById('rec-notes').value = '';
+  refreshDashboard();
+  toast('Recovery logged!');
+}
+
+// ============================================================
+//  WORKOUT LOG
+// ============================================================
+let exerciseCount = 0;
+
+function addExercise(name) {
+  exerciseCount++;
+  const idx = exerciseCount;
+  const container = document.getElementById('exercises-container');
+  const div = document.createElement('div');
+  div.className = 'exercise-block';
+  div.id = 'ex-block-' + idx;
+  div.innerHTML = `
+    <div class="exercise-block-header">
+      <input type="text" placeholder="Exercise name" value="${name || ''}"
+             style="font-weight:700;font-size:0.95rem;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:4px 0;width:200px"
+             id="ex-name-${idx}">
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="ex-muscle-${idx}" style="width:auto;padding:4px 8px;font-size:0.78rem">
+          <option>Chest</option><option>Back</option><option>Shoulders</option>
+          <option>Biceps</option><option>Triceps</option><option>Legs</option>
+          <option>Glutes</option><option>Core</option><option>Cardio</option><option>Full Body</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="addSet(${idx})">+ Set</button>
+        <button class="btn-del" onclick="document.getElementById('ex-block-${idx}').remove()" title="Remove exercise">&#x2715;</button>
+      </div>
+    </div>
+    <table class="sets-table">
+      <thead><tr>
+        <th>#</th><th>Weight (kg)</th><th>Reps</th><th>Rest (s)</th><th></th>
+      </tr></thead>
+      <tbody id="sets-body-${idx}"></tbody>
+    </table>
+  `;
+  container.appendChild(div);
+  addSet(idx);
+}
+
+function addSet(exIdx) {
+  const tbody = document.getElementById('sets-body-' + exIdx);
+  const setNum = tbody.children.length + 1;
+  const tr = document.createElement('tr');
+  tr.id = `set-${exIdx}-${setNum}`;
+  tr.innerHTML = `
+    <td class="set-num">${setNum}</td>
+    <td><input type="number" placeholder="0" min="0" step="0.5" style="width:80px"></td>
+    <td><input type="number" placeholder="0" min="0" style="width:70px"></td>
+    <td><input type="number" placeholder="90" min="0" style="width:70px"></td>
+    <td><button class="btn-del" onclick="this.closest('tr').remove()" title="Remove set">&#x2715;</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function clearWorkoutForm() {
+  document.getElementById('wk-name').value = '';
+  document.getElementById('wk-date').value = today();
+  document.getElementById('wk-duration').value = '';
+  document.getElementById('wk-burned').value = '';
+  document.getElementById('wk-notes').value = '';
+  document.getElementById('exercises-container').innerHTML = '';
+  exerciseCount = 0;
+}
+
+function saveWorkout() {
+  const name = document.getElementById('wk-name').value.trim();
+  const date = document.getElementById('wk-date').value;
+  const duration = parseInt(document.getElementById('wk-duration').value) || 0;
+  const burned = parseInt(document.getElementById('wk-burned').value) || 0;
+  const notes = document.getElementById('wk-notes').value.trim();
+
+  if (!name) { toast('Please enter a workout name.'); return; }
+  if (!date) { toast('Please pick a date.'); return; }
+
+  // Collect exercises
+  const exercises = [];
+  document.querySelectorAll('.exercise-block').forEach(block => {
+    const id = block.id.replace('ex-block-', '');
+    const exName = document.getElementById('ex-name-' + id).value.trim();
+    const muscle = document.getElementById('ex-muscle-' + id).value;
+    const sets = [];
+    block.querySelectorAll('tbody tr').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      sets.push({
+        weight: parseFloat(inputs[0].value) || 0,
+        reps: parseInt(inputs[1].value) || 0,
+        rest: parseInt(inputs[2].value) || 90
+      });
+    });
+    if (exName) exercises.push({ name: exName, muscle, sets });
+  });
+
+  const workout = { id: uid(), name, date, duration, burned, notes, exercises, createdAt: new Date().toISOString() };
+  DB.push('workouts', workout);
+  clearWorkoutForm();
+  toast('Workout saved!');
+  refreshDashboard();
+}
+
+// ============================================================
+//  STREAK LOGIC
+// ============================================================
+function computeStreak() {
+  const workouts = DB.get('workouts');
+  if (!workouts.length) return { current: 0, best: 0, days: [] };
+
+  // Get unique workout dates as Set
+  const daysSet = new Set(workouts.map(w => w.date));
+  const daysArr = Array.from(daysSet).sort();
+
+  // Build last-21-days array
+  const last21 = [];
+  for (let i = 20; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last21.push(d.toISOString().slice(0, 10));
+  }
+
+  // Current streak: count backwards from today (allow today OR yesterday to anchor)
+  let current = 0;
+  let cursor = new Date();
+  let cursorStr = cursor.toISOString().slice(0, 10);
+
+  // If today is not yet logged, anchor from yesterday
+  if (!daysSet.has(cursorStr)) {
+    cursor.setDate(cursor.getDate() - 1);
+    cursorStr = cursor.toISOString().slice(0, 10);
+  }
+
+  while (daysSet.has(cursorStr)) {
+    current++;
+    cursor.setDate(cursor.getDate() - 1);
+    cursorStr = cursor.toISOString().slice(0, 10);
+  }
+
+  // Best streak: scan all dates sorted
+  let best = 0, run = 1;
+  for (let i = 1; i < daysArr.length; i++) {
+    const prev = new Date(daysArr[i - 1]);
+    const curr = new Date(daysArr[i]);
+    const diff = (curr - prev) / 86400000;
+    if (diff === 1) { run++; best = Math.max(best, run); }
+    else run = 1;
+  }
+  best = Math.max(best, run, current);
+
+  return { current, best, days: last21, daysSet };
+}
+
+function streakMessage(n) {
+  if (n === 0) return 'Log your first workout to start your streak!';
+  if (n === 1) return 'Great start! Come back tomorrow to keep it going.';
+  if (n < 3) return `${n} days in a row. Building the habit!`;
+  if (n < 7) return `${n} days strong. You are building real momentum.`;
+  if (n < 14) return `${n} days! A full week of consistency. Keep pushing.`;
+  if (n < 30) return `${n} days! You are on fire. Don't break the chain.`;
+  return `${n} days! That is elite-level commitment. Incredible.`;
+}
+
+function renderStreakCalendar(last21, daysSet) {
+  const cal = document.getElementById('streak-calendar');
+  cal.innerHTML = '';
+  const todayStr = today();
+  last21.forEach(d => {
+    const dot = document.createElement('div');
+    dot.className = 'streak-dot' + (daysSet && daysSet.has(d) ? ' worked' : '') + (d === todayStr ? ' today' : '');
+    dot.title = fmtDate(d) + (daysSet && daysSet.has(d) ? ' — workout logged' : '');
+    cal.appendChild(dot);
+  });
+}
+
+// ============================================================
+//  CHARTS
+// ============================================================
+let chartCalories = null, chartDuration = null, chartSleep = null;
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141414', borderColor: '#2A2A2A', borderWidth: 1, titleColor: '#F5F5F5', bodyColor: '#8A8A8E' } },
+  scales: {
+    x: { grid: { color: '#2A2A2A' }, ticks: { color: '#8A8A8E', font: { size: 11 } } },
+    y: { grid: { color: '#2A2A2A' }, ticks: { color: '#8A8A8E', font: { size: 11 } }, beginAtZero: true }
+  }
+};
+
+function buildChartData(records, dateField, valueField, days = 7) {
+  const labels = [], values = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    const dayRecords = records.filter(r => r[dateField] === ds);
+    values.push(dayRecords.reduce((s, r) => s + (r[valueField] || 0), 0));
+  }
+  return { labels, values };
+}
+
+function initOrUpdateChart(ref, id, labels, values, color, label) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (ref) { ref.data.labels = labels; ref.data.datasets[0].data = values; ref.update(); return ref; }
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ label, data: values, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.4, pointBackgroundColor: color, pointRadius: 4, pointHoverRadius: 6 }]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ` ${ctx.parsed.y} ${label}` } } } }
+  });
+}
+
+// ============================================================
+//  DASHBOARD REFRESH
+// ============================================================
+function refreshDashboard() {
+  const calories = DB.get('calories');
+  const workouts = DB.get('workouts');
+  const sleep    = DB.get('sleep');
+  const recovery = DB.get('recovery');
+  const todayStr = today();
+
+  // Stats
+  const todayCal = calories.filter(c => c.date === todayStr).reduce((s, c) => s + c.amount, 0);
+  document.getElementById('stat-cal').innerHTML = `${todayCal}<span class="stat-unit">kcal</span>`;
+
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekWorkouts = workouts.filter(w => new Date(w.date) >= weekAgo);
+  document.getElementById('stat-wk').textContent = weekWorkouts.length;
+
+  const weekBurned = weekWorkouts.reduce((s, w) => s + (w.burned || 0), 0);
+  document.getElementById('stat-burned').innerHTML = `${weekBurned}<span class="stat-unit">kcal</span>`;
+
+  const recent7Sleep = sleep.filter(s => new Date(s.date) >= weekAgo);
+  const avgSleep = recent7Sleep.length ? (recent7Sleep.reduce((s, x) => s + x.hours, 0) / recent7Sleep.length).toFixed(1) : 0;
+  document.getElementById('stat-sleep').innerHTML = `${avgSleep}<span class="stat-unit">h</span>`;
+
+  const latestRec = recovery.sort((a, b) => b.date.localeCompare(a.date))[0];
+  document.getElementById('stat-recovery').innerHTML = `${latestRec ? latestRec.score : 0}<span class="stat-unit">/10</span>`;
+
+  // Streak
+  const { current, best, days, daysSet } = computeStreak();
+  document.getElementById('streak-num').textContent = current;
+  document.getElementById('streak-best-num').textContent = best;
+  document.getElementById('streak-msg').textContent = streakMessage(current);
+  renderStreakCalendar(days, daysSet);
+
+  // Recent calories list
+  const calList = document.getElementById('list-calories');
+  const recentCals = calories.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+  calList.innerHTML = recentCals.length
+    ? recentCals.map(c => `
+        <div class="list-item">
+          <div>
+            <div class="list-item-name">${c.food}</div>
+            <div class="list-item-sub">${c.meal} &bull; ${fmtDate(c.date)}</div>
+          </div>
+          <div style="display:flex;align-items:center">
+            <span class="list-item-value">${c.amount} kcal</span>
+            <button class="btn-del" onclick="deleteCalorie('${c.id}')">&#x2715;</button>
+          </div>
+        </div>`).join('')
+    : '<div class="list-empty">No calorie entries yet.<br>Tap Add Calories to log your first meal.</div>';
+
+  // Recent workouts list
+  const wkList = document.getElementById('list-workouts');
+  const recentWk = workouts.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+  wkList.innerHTML = recentWk.length
+    ? recentWk.map(w => `
+        <div class="list-item">
+          <div>
+            <div class="list-item-name">${w.name}</div>
+            <div class="list-item-sub">${fmtDate(w.date)}${w.duration ? ' &bull; ' + w.duration + ' min' : ''}</div>
+          </div>
+          <span class="list-item-value">${w.exercises.length} exercise${w.exercises.length !== 1 ? 's' : ''}</span>
+        </div>`).join('')
+    : '<div class="list-empty">No workouts logged yet.<br>Tap Log Workout to record your first session.</div>';
+
+  // Charts — calories last 7 days
+  const calData = buildChartData(calories, 'date', 'amount', 7);
+  chartCalories = initOrUpdateChart(chartCalories, 'chart-calories', calData.labels, calData.values, '#FF3B30', 'kcal');
+
+  // Charts — workout duration last 7 days (per day sum)
+  const durRecords = workouts.map(w => ({ date: w.date, duration: w.duration || 0 }));
+  const durData = buildChartData(durRecords, 'date', 'duration', 7);
+  chartDuration = initOrUpdateChart(chartDuration, 'chart-duration', durData.labels, durData.values, '#FF8C00', 'min');
+
+  // Charts — sleep last 14 days
+  const sleepData = buildChartData(sleep, 'date', 'hours', 14);
+  chartSleep = initOrUpdateChart(chartSleep, 'chart-sleep', sleepData.labels, sleepData.values, '#5E9FFF', 'h');
+}
+
+// ============================================================
+//  HISTORY PAGE
+// ============================================================
+function renderHistory() {
+  const search = document.getElementById('history-search').value.toLowerCase();
+  const sort = document.getElementById('history-sort').value;
+  let workouts = DB.get('workouts');
+
+  if (search) workouts = workouts.filter(w => w.name.toLowerCase().includes(search) || (w.notes || '').toLowerCase().includes(search));
+
+  if (sort === 'newest') workouts.sort((a, b) => b.date.localeCompare(a.date));
+  else if (sort === 'oldest') workouts.sort((a, b) => a.date.localeCompare(b.date));
+  else if (sort === 'duration') workouts.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+
+  const container = document.getElementById('history-list');
+  if (!workouts.length) {
+    container.innerHTML = '<div class="list-empty" style="padding:40px 0;font-size:1rem">No workouts found. Log your first session using the Log Workout tab.</div>';
+    return;
+  }
+
+  container.innerHTML = workouts.map(w => {
+    const exSummary = w.exercises.map(e => `${e.name} (${e.sets.length} sets)`).join(', ') || 'No exercises logged';
+    const volume = w.exercises.reduce((total, e) => total + e.sets.reduce((s, set) => s + (set.weight * set.reps), 0), 0);
+    return `
+      <div class="workout-history-card">
+        <div class="workout-history-header">
+          <div>
+            <div class="workout-history-name">${w.name}</div>
+            <div class="workout-history-date">${fmtDate(w.date)}</div>
+          </div>
+          <button class="btn-del" style="font-size:1.2rem" onclick="deleteWorkout('${w.id}')" title="Delete workout">&#x2715;</button>
+        </div>
+        <div class="workout-history-meta">
+          ${w.duration ? `<div>Duration <span>${w.duration} min</span></div>` : ''}
+          ${w.burned ? `<div>Burned <span>${w.burned} kcal</span></div>` : ''}
+          ${volume ? `<div>Volume <span>${Math.round(volume)} kg</span></div>` : ''}
+          <div>Exercises <span>${w.exercises.length}</span></div>
+        </div>
+        ${w.exercises.length ? `<div class="exercises-summary">${exSummary}</div>` : ''}
+        ${w.notes ? `<div class="exercises-summary" style="margin-top:6px;font-style:italic">"${w.notes}"</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function deleteWorkout(id) {
+  DB.remove('workouts', id);
+  renderHistory();
+  refreshDashboard();
+  toast('Workout deleted.');
+}
+
+// ============================================================
+//  MOTIVATIONAL QUOTES  (rotates daily)
+// ============================================================
+const quotes = [
+  "Push harder than yesterday if you want a different tomorrow.",
+  "The body achieves what the mind believes.",
+  "Sweat is just fat crying.",
+  "Don't stop when you're tired. Stop when you're done.",
+  "Your only limit is you.",
+  "Train insane or remain the same.",
+  "Success starts with self-discipline.",
+  "One more rep. One more set. One more day.",
+  "Consistency is what transforms average into excellent.",
+  "It always seems impossible until it is done."
+];
+
+function setDailyQuote() {
+  const idx = new Date().getDate() % quotes.length;
+  document.getElementById('hero-quote').textContent = quotes[idx];
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Set today's date as default in workout form
+  document.getElementById('wk-date').value = today();
+
+  setDailyQuote();
+  refreshDashboard();
+});
+</script>
+</body>
+</html>

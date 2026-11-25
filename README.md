@@ -72,3 +72,9 @@ No `LICENSE` file was found at the repository root during this review, so do not
 - **Scope and evidence:** Documentation-level review of the checked-in README, standalone `index.html`, `App.jsx`, and `tailwind.config.js`. This does not establish that the page runs correctly, that calculations are accurate, or that the incomplete React scaffold builds.
 - **Code and tests:** No application code was changed and no browser test, build, or calculation test was performed.
 - **Maintenance baseline:** Documentation status recorded through 18 November 2026; revisit setup instructions, local-storage behavior, dependencies, and the missing React project files when the repository changes.
+
+## Contact
+
+Maintained up to 25 November 2026.
+
+If you encounter any problems, please contact [carmodbhai@gmail.com](mailto:carmodbhai@gmail.com).
